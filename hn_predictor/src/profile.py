@@ -3,8 +3,7 @@ import comet_ml
 import os
 import argparse
 
-from data import load_data, fetch_artifact
-from hn_predictor.src.data import profile_data
+from data import load_data, fetch_artifact, profile_data
 
 DATA_PATH = os.getenv("DATA_PATH")
 
