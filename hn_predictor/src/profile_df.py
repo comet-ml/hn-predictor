@@ -12,9 +12,8 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--artifact_name", type=str)
     parser.add_argument("--artifact_version", type=str, default="latest")
-    parser.add_argument("--asset_names")
-    parser.add_argument("--asset_split_name", type=str)
-    parser.add_argument("--target_name", type=str)
+    parser.add_argument("--minimal", action="store_true")
+    parser.add_argument("--log_raw_dataframe", action="store_true")
     parser.add_argument("--message", type=str)
 
     return parser.parse_args()
@@ -35,8 +34,12 @@ def main():
     datasets = [
         [load_data(path), split_name] for split_name, path in data_config.items()
     ]
-    # df = load_data(data_config[args.asset_split_name])
-    profile_data(experiment, datasets, args.target_name)
+    profile_data(
+        experiment,
+        datasets,
+        minimal=True if args.minimal else False,
+        log_raw_dataframe=True if args.log_raw_dataframe else False,
+    )
 
 
 if __name__ == "__main__":

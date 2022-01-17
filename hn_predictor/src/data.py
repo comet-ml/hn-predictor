@@ -1,5 +1,7 @@
 import os
+from unittest import expectedFailure
 import pandas as pd
+from pandas_profiling import ProfileReport
 import sweetviz as sv
 
 OVERWRITE_STRATEGY = os.getenv("COMET_ARTIFACT_OVERWRITE_STRATEGY", "OVERWRITE")
@@ -35,11 +37,8 @@ def fetch_dataset_artifact(
     return output
 
 
-def profile_data(experiment, dataframes, target=None):
-    filtered = []
+def profile_data(experiment, dataframes, minimal=True, log_raw_dataframe=False):
     for df, label in dataframes:
-        df = df.dropna(subset=[target])
-        filtered.append([df, label])
-
-    report = sv.compare(*filtered, target_feat=target)
-    report.log_comet(experiment)
+        experiment.log_dataframe_profile(
+            df, label, minimal=minimal, log_raw_dataframe=log_raw_dataframe
+        )
