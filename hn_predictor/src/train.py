@@ -39,6 +39,9 @@ def main():
     train_df = load_data(dataset_config["train"])
     valid_df = load_data(dataset_config["valid"])
 
+    train_df = train_df.dropna(subset=[args.target_name])
+    valid_df = valid_df.dropna(subset=[args.target_name])
+
     model = BaselineModel(strategy=args.strategy, quantile=args.quantile)
 
     # Remove Target Column from DataFrame
