@@ -1,3 +1,4 @@
 comet_ml
-sweetviz
+pandas-profiling
+scikit-learn
 pandas
