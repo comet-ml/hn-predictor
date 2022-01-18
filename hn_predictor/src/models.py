@@ -3,7 +3,7 @@ from sklearn.dummy import DummyRegressor
 
 
 class BaselineModel:
-    def __init__(self, strategy="mean", quantile=0.5) -> None:
+    def __init__(self, strategy="mean", quantile=0.5):
         if strategy == "quantile":
             self.model = DummyRegressor(strategy, quantile=quantile)
 

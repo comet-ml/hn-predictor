@@ -4,14 +4,19 @@ import os
 import argparse
 
 from data import load_data, fetch_dataset_artifact
+from models import BaselineModel
+from metrics import compute_metrics
 
 DATA_PATH = os.getenv("DATA_PATH", "../data")
+ASSET_PATH = os.getenv("ASSET_PATH", "../assets")
 
 
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--artifact_name", type=str)
-    parser.add_argument("--artifact_version", type=str)
+    parser.add_argument("--artifact_version", type=str, default="latest")
+    parser.add_argument("--strategy", type=str, default="mean")
+    parser.add_argument("--quantile", type=float, default=0.5)
     parser.add_argument("--message", type=str)
 
     return parser.parse_args()
@@ -25,17 +30,34 @@ def main():
 
     dataset_config = fetch_dataset_artifact(
         experiment,
-        args.train_artifact_name,
-        args.train_artifact_version,
+        args.artifact_name,
+        args.artifact_version,
         output_path=DATA_PATH,
     )
 
     train_df = load_data(dataset_config["train"])
     valid_df = load_data(dataset_config["valid"])
 
-    # TODO: Model training and evaluation
+    model = BaselineModel(strategy=args.strategy, quantile=args.quantile)
+    model.fit(train_df, train_df["target"])
 
-    return
+    with experiment.train():
+        predictions = model.predict(train_df)
+        metrics = compute_metrics(predictions, train_df["target"])
+        experiment.log_metrics(metrics)
+
+    with experiment.validate():
+        predictions = model.predict(valid_df)
+        metrics = compute_metrics(predictions, valid_df["target"])
+        experiment.log_metrics(metrics)
+
+    # Save the Model
+    model_path = os.path.join(ASSET_PATH, "model.pkl")
+    model.save(model_path)
+    experiment.log_model(
+        "hn-baseline-regression",
+        model_path,
+    )
 
 
 if __name__ == "__main__":
