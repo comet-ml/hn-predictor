@@ -21,4 +21,4 @@ class BaselineModel:
 
     def save(self, path):
         with open(path, "wb") as f:
-            pickle.dump(self.model, path)
+            pickle.dump(self.model, f)
