@@ -15,6 +15,7 @@ def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--artifact_name", type=str)
     parser.add_argument("--artifact_version", type=str, default="latest")
+    parser.add_argument("--target_name", type=str)
     parser.add_argument("--strategy", type=str, default="mean")
     parser.add_argument("--quantile", type=float, default=0.5)
     parser.add_argument("--message", type=str)
@@ -39,16 +40,22 @@ def main():
     valid_df = load_data(dataset_config["valid"])
 
     model = BaselineModel(strategy=args.strategy, quantile=args.quantile)
-    model.fit(train_df, train_df["target"])
+
+    # Remove Target Column from DataFrame
+    y_train = train_df.pop(args.target_name)
+    # Fit the Model
+    model.fit(train_df, y_train)
 
     with experiment.train():
         predictions = model.predict(train_df)
-        metrics = compute_metrics(predictions, train_df["target"])
+        metrics = compute_metrics(predictions, y_train)
         experiment.log_metrics(metrics)
 
     with experiment.validate():
+        y_valid = valid_df.pop(args.target_name)
+
         predictions = model.predict(valid_df)
-        metrics = compute_metrics(predictions, valid_df["target"])
+        metrics = compute_metrics(predictions, y_valid)
         experiment.log_metrics(metrics)
 
     # Save the Model
