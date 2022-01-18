@@ -5,10 +5,10 @@ from sklearn.dummy import DummyRegressor
 class BaselineModel:
     def __init__(self, strategy="mean", quantile=0.5):
         if strategy == "quantile":
-            self.model = DummyRegressor(strategy, quantile=quantile)
+            self.model = DummyRegressor(strategy=strategy, quantile=quantile)
 
         else:
-            self.model = DummyRegressor(strategy)
+            self.model = DummyRegressor(strategy=strategy)
 
     def fit(self, X, y):
         self.model.fit(X, y)
@@ -20,4 +20,4 @@ class BaselineModel:
         self.model = pickle.load(path)
 
     def save(self, path):
-        self.model.save(path)
+        pickle.dump(self.model, path)
