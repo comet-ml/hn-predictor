@@ -1,13 +1,17 @@
-'''
-For something like 
-'''
+from sklearn.metrics import (
+confusion_matrix,
+log_loss,
+accuracy_score,
+precision_score,
+recall_score
+)
 
 
-class BaseMetrics:
-
-    def __init__(self, metrics: List[callable]):
-        pass
-
-    def compute_metrics(model, X, y, metrics: dict={'accuracy': 'accuracy_score'}):
-        '''Generic'''
-        pass
+def compute_metrics(predictions, target):
+    return {
+        "confusion_matrix": confusion_matrix(target, predictions),
+        "loss": log_loss(target, predictions),
+        "accuracy": accuracy_score(target, predictions),
+        "precision": precision_score(target, predictions),
+        "recall": recall_score(target, predictions)
+    }
