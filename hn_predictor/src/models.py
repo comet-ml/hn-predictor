@@ -1,11 +1,11 @@
 import pickle
 from sklearn.dummy import DummyClassifier
 from sklearn.pipeline import Pipeline
-
+import numpy as np
 
 def threshold_factory(threshold=10):
     def _threshold(y):
-        return y > threshold
+        return np.array(y > threshold, dtype=np.int)
 
     return _threshold
 
