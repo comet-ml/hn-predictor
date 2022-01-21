@@ -4,7 +4,7 @@ import os
 import argparse
 
 from data import load_data, fetch_dataset_artifact
-from models import BaselineClassifier
+from models import BaselineClassifier, threshold_factory
 from metrics import compute_metrics
 
 DATA_PATH = os.getenv("DATA_PATH", "../data")
@@ -13,9 +13,9 @@ ASSET_PATH = os.getenv("ASSET_PATH", "../assets")
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--artifact_name", type=str)
+    parser.add_argument("--artifact_name", type=str, default="hn-dataset")
     parser.add_argument("--artifact_version", type=str, default="latest")
-    parser.add_argument("--target_name", type=str)
+    parser.add_argument("--target_name", type=str, default="score")
     parser.add_argument("--strategy", type=str, default="prior")
     parser.add_argument("--random_state", type=int, default=None)
     parser.add_argument("--threshold", type=float, default=10)
@@ -47,25 +47,26 @@ def main():
     train_df = train_df.dropna(subset=[args.target_name])
     valid_df = valid_df.dropna(subset=[args.target_name])
 
-    model = BaselineClassifier(strategy=args.strategy, random_state=args.random_state)
+    model = BaselineClassifier(
+        strategy=args.strategy,
+        random_state=args.random_state,
+        target_transform=threshold_factory(args.threshold),
+    )
 
     # Remove Target Column from DataFrame
     y_train = train_df.pop(args.target_name)
-    y_train = model.target_transform(y_train)
     # Fit the Model
     model.fit(train_df, y_train)
 
     with experiment.train():
         predictions = model.predict(train_df)
-        metrics = compute_metrics(predictions, y_train)
+        metrics = compute_metrics(predictions, model.target_transform(y_train))
         experiment.log_metrics(metrics)
 
     with experiment.validate():
         y_valid = valid_df.pop(args.target_name)
-        y_valid = model.target_transform(y_valid)
-
         predictions = model.predict(valid_df)
-        metrics = compute_metrics(predictions, y_valid)
+        metrics = compute_metrics(predictions, model.target_transform(y_valid))
         experiment.log_metrics(metrics)
 
     # Save the Model
