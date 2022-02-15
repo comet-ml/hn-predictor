@@ -31,6 +31,7 @@ def fetch_dataset_artifact(
     output = {}
     for key, value in metadata["filenames"].items():
         output[key] = f"{output_path}/{value}"
+    column_names = metadata['columns']
 
     return output
 

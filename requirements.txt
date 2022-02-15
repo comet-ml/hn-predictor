@@ -2,3 +2,4 @@ comet_ml
 pandas-profiling
 scikit-learn
 pandas
+great_expectations
