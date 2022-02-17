@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from sklearn.metrics import (
     mean_squared_error,
@@ -18,7 +19,7 @@ def sample_wise_rsme(predictions, target):
 def sample_wise_mape(predictions, target):
     df = pd.concat([predictions, target], axis=1)
     df.columns = ["predictions", "target"]
-    residuals = abs(df["predictions"] - df["target"]) / df["target"]
+    residuals = np.abs(df["predictions"] - df["target"]) / df["target"]
 
     return residuals.values
 

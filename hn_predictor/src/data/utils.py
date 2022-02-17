@@ -68,6 +68,8 @@ def extract_timestamp_features(df):
     output["month"] = df["timestamp"].dt.month
     output["year"] = df["timestamp"].dt.year
 
+    output.index = df.index
+
     return output
 
 
@@ -110,7 +112,7 @@ def preprocess(
 
     columns = [f"feature_{i}" for i in range(results.shape[1])]
     text_features = pd.DataFrame(results, columns=columns)
-
+    text_features.index = df.index
     output = pd.concat([timestamp_features, text_features], axis=1)
     output[target_name] = target
 

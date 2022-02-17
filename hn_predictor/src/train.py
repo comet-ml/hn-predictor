@@ -18,9 +18,36 @@ def get_args():
     parser.add_argument("--artifact_version", type=str, default="latest")
     parser.add_argument("--target_name", type=str)
     parser.add_argument("--smoke-test", action="store_true")
+    parser.add_argument("--smoke_test_frac", type=float, default=0.01)
+    parser.add_argument("--optimizer_config", type=str)
     parser.add_argument("--message", type=str)
 
     return parser.parse_args()
+
+
+def run_optimizer(
+    optimizer_config,
+    X_train,
+    y_train,
+    X_valid,
+    y_valid,
+    evaluation_pipeline,
+):
+    optimizer = comet_ml.Optimizer(optimizer_config)
+    for opt_parameters in optimizer.get_parameters():
+        experiment = comet_ml.Experiment()
+
+        config = TreeConfig()
+        model = TreeModel(params=config.params(**opt_parameters["parameters"]))
+        train_and_evaluate(
+            experiment,
+            model=model,
+            X_train=X_train,
+            y_train=y_train,
+            X_valid=X_valid,
+            y_valid=y_valid,
+            evaluation_pipeline=evaluation_pipeline,
+        )
 
 
 def train_and_evaluate(
@@ -36,7 +63,13 @@ def train_and_evaluate(
     model.fit(X_train=X_train, y_train=y_train, X_valid=X_valid, y_valid=y_valid)
     evaluation_pipeline(experiment, model, X=X_valid, y=y_valid)
 
-    return model
+    # Save the Model
+    model_path = os.path.join(ASSET_PATH, "model.pkl")
+    model.save(model_path)
+    experiment.log_model(
+        "hn-gbdt-regression",
+        model_path,
+    )
 
 
 def main():
@@ -44,6 +77,7 @@ def main():
 
     experiment = comet_ml.Experiment()
     experiment.add_tag("train_and_evaluate")
+    experiment.add_tag("regression")
 
     dataset_config = fetch_dataset_artifact(
         experiment,
@@ -59,7 +93,10 @@ def main():
     valid_df = valid_df.dropna(subset=[args.target_name])
 
     if args.smoke_test:
-        train_df, valid_df = map(lambda x: x.sample(n=10), [train_df, valid_df])
+        experiment.add_tag("smoke-test")
+        train_df, valid_df = map(
+            lambda x: x.sample(frac=args.smoke_test_frac), [train_df, valid_df]
+        )
 
     y_train = train_df.pop(args.target_name)
     y_valid = valid_df.pop(args.target_name)
@@ -67,26 +104,28 @@ def main():
     X_train = train_df
     X_valid = valid_df
 
-    config = TreeConfig()
+    if args.optimizer_config:
+        run_optimizer(
+            args.optimizer_config,
+            X_train,
+            y_train,
+            X_valid,
+            y_valid,
+            evaluation_pipeline,
+        )
 
-    model = TreeModel(params=config.params())
-    model = train_and_evaluate(
-        experiment,
-        model=model,
-        X_train=X_train,
-        y_train=y_train,
-        X_valid=X_valid,
-        y_valid=y_valid,
-        evaluation_pipeline=evaluation_pipeline,
-    )
-
-    # Save the Model
-    model_path = os.path.join(ASSET_PATH, "model.pkl")
-    model.save(model_path)
-    experiment.log_model(
-        "hn-gbdt-regression",
-        model_path,
-    )
+    else:
+        config = TreeConfig()
+        model = TreeModel(params=config.params())
+        train_and_evaluate(
+            experiment,
+            model=model,
+            X_train=X_train,
+            y_train=y_train,
+            X_valid=X_valid,
+            y_valid=y_valid,
+            evaluation_pipeline=evaluation_pipeline,
+        )
 
 
 if __name__ == "__main__":
