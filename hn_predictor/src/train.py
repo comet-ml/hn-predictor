@@ -36,6 +36,7 @@ def run_optimizer(
     optimizer = comet_ml.Optimizer(optimizer_config)
     for opt_parameters in optimizer.get_parameters():
         experiment = comet_ml.Experiment()
+        experiment.log_others(opt_parameters)
 
         config = TreeConfig()
         model = TreeModel(params=config.params(**opt_parameters["parameters"]))
