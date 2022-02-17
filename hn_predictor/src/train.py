@@ -59,6 +59,8 @@ def train_and_evaluate(
     X_valid=None,
     y_valid=None,
 ):
+    experiment.add_tag("train_and_evaluate")
+    experiment.add_tag("regression")
 
     model.fit(X_train=X_train, y_train=y_train, X_valid=X_valid, y_valid=y_valid)
     evaluation_pipeline(experiment, model, X=X_valid, y=y_valid)
@@ -76,8 +78,6 @@ def main():
     args = get_args()
 
     experiment = comet_ml.Experiment()
-    experiment.add_tag("train_and_evaluate")
-    experiment.add_tag("regression")
 
     dataset_config = fetch_dataset_artifact(
         experiment,
