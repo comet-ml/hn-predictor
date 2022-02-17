@@ -34,12 +34,16 @@ def run_optimizer(
     evaluation_pipeline,
 ):
     optimizer = comet_ml.Optimizer(optimizer_config)
-    for opt_parameters in optimizer.get_parameters():
-        experiment = comet_ml.Experiment()
-        experiment.log_others(optimizer.status(), prefix="optimizer")
+    for experiment in optimizer.get_experiments():
+        parameters = {
+            "n_estimators": experiment.get_parameter("n_estimators"),
+            "num_leaves": experiment.get_parameter("num_leaves"),
+            "learning_rate": experiment.get_parameter("learning_rate"),
+        }
 
         config = TreeConfig()
-        model = TreeModel(params=config.params(**opt_parameters["parameters"]))
+        model = TreeModel(params=config.params(**parameters))
+
         train_and_evaluate(
             experiment,
             model=model,
